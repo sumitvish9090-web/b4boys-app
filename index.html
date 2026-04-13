@@ -3,6 +3,10 @@
 <head>
 <title>B4BOYS</title>
 
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
 <style>
 body {
   background:black;
@@ -10,15 +14,8 @@ body {
   text-align:center;
   font-family:Arial;
 }
-
-input, button {
+input,button {
   margin:5px;
-  padding:10px;
-}
-
-.entry {
-  border:1px solid lime;
-  margin:10px;
   padding:10px;
 }
 </style>
@@ -32,33 +29,19 @@ input, button {
 
 <div id="loginBox">
 <input id="email" placeholder="Email"><br>
-<input id="password" type="password" placeholder="Password"><br>
+<input id="password" type="password"><br>
 
 <button onclick="signup()">Sign Up</button>
 <button onclick="login()">Login</button>
 </div>
 
 <div id="app" style="display:none">
-
-<input id="note" placeholder="Practice"><br>
-<input id="rating" type="number" placeholder="Rating"><br>
-
-<button onclick="addData()">Add Entry</button>
-
-<h2>Leaderboard</h2>
-<div id="leaderboard"></div>
-
-<h2>Entries</h2>
-<div id="entries"></div>
-
+<h2>Logged in ✅</h2>
 </div>
 
-<script type="module">
+<script>
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { getFirestore, collection, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
+// 🔥 TERA CONFIG
 const firebaseConfig = {
   apiKey: "AIzaSyBRryiKa35ZJkWHqDgoHAnscNPPzcqoEn0",
   authDomain: "b4-boys.firebaseapp.com",
@@ -69,74 +52,35 @@ const firebaseConfig = {
   measurementId: "G-0KBTLPXB5T"
 };
 
-const appFirebase = initializeApp(firebaseConfig);
-const auth = getAuth(appFirebase);
-const db = getFirestore(appFirebase);
+firebase.initializeApp(firebaseConfig);
 
 // SIGNUP
-window.signup = function(){
-  createUserWithEmailAndPassword(auth, email.value, password.value)
-    .then(()=> alert("Signup Success 🔥"))
-    .catch(err => alert(err.message));
+function signup(){
+  firebase.auth().createUserWithEmailAndPassword(
+    email.value,
+    password.value
+  )
+  .then(()=> alert("Signup Success 🔥"))
+  .catch(err => alert(err.message));
 }
 
 // LOGIN
-window.login = function(){
-  signInWithEmailAndPassword(auth, email.value, password.value)
-    .then(()=> alert("Login Success 🔥"))
-    .catch(err => alert(err.message));
+function login(){
+  firebase.auth().signInWithEmailAndPassword(
+    email.value,
+    password.value
+  )
+  .then(()=> alert("Login Success 🔥"))
+  .catch(err => alert(err.message));
 }
 
-// AUTH CHECK
-onAuthStateChanged(auth, user=>{
+// LOGIN CHECK
+firebase.auth().onAuthStateChanged(user=>{
   if(user){
     loginBox.style.display="none";
     app.style.display="block";
-    loadData();
   }
 });
-
-// ADD DATA
-window.addData = async function(){
-  await addDoc(collection(db,"dance"),{
-    user: auth.currentUser.email,
-    note: note.value,
-    rating: Number(rating.value)
-  });
-}
-
-// LOAD DATA
-function loadData(){
-  onSnapshot(collection(db,"dance"), snap=>{
-    let html="";
-    let scores={};
-
-    snap.forEach(doc=>{
-      let e = doc.data();
-
-      html += `
-      <div class="entry">
-        <h3>${e.user}</h3>
-        <p>${e.note}</p>
-        <p>⭐ ${e.rating}</p>
-      </div>
-      `;
-
-      scores[e.user]=(scores[e.user]||0)+e.rating;
-    });
-
-    entries.innerHTML = html;
-
-    // leaderboard
-    let lb="";
-    Object.keys(scores).sort((a,b)=>scores[b]-scores[a])
-    .forEach(u=>{
-      lb += `<p>${u} - ${scores[u]}</p>`;
-    });
-
-    leaderboard.innerHTML = lb;
-  });
-}
 
 </script>
 
